@@ -1,0 +1,24 @@
+{
+  "name": "lengbin/common",
+  "description": "php common",
+  "type": "library",
+  "keywords": ["php", "extension", "common"],
+  "license": "MIT",
+  "require": {
+    "php": ">=7.2.0",
+    "lengbin/helper": "dev-master",
+    "roave/better-reflection": "^4.0"
+  },
+  "minimum-stability": "stable",
+  "autoload": {
+    "psr-4": {
+      "Lengbin\\Common\\": "src"
+    }
+  },
+  "authors": [
+    {
+      "name": "lengbin",
+      "email": "xykxyk2008@163.com"
+    }
+  ]
+}
