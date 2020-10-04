@@ -20,10 +20,5 @@
       "name": "lengbin",
       "email": "xykxyk2008@163.com"
     }
-  ],
-  "extra": {
-    "branch-alias": {
-      "dev-master": "1.0.x-dev"
-    }
-  }
+  ]
 }
