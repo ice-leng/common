@@ -20,5 +20,11 @@
       "name": "lengbin",
       "email": "xykxyk2008@163.com"
     }
-  ]
+  ],
+  "repositories": {
+    "lengbin/helper": {
+      "type": "vcs",
+      "url": "https://github.com/ice-leng/helper.git"
+    }
+  }
 }
