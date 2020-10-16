@@ -164,8 +164,6 @@ class BaseObject
             $this->{$name} = $value;
         } elseif (method_exists($this, 'get' . $name)) {
             throw new \RuntimeException('Setting read-only property: ' . get_class($this) . '::' . $name);
-        } else {
-            throw new \RuntimeException('Setting unknown property: ' . get_class($this) . '::' . $name);
         }
     }
 
