@@ -45,6 +45,10 @@ class BaseObject
      */
     private function createObject(string $className, $value): object
     {
+        if (method_exists($className, 'byValue')) {
+            return $className::byValue($value);
+        }
+
         $class = new $className;
         if ($class instanceof BaseObject) {
             $class->configure($class, $value);
@@ -113,7 +117,13 @@ class BaseObject
         foreach ($properties as $name => $value) {
             $fun = 'set' . ucfirst(FormatHelper::camelize($name));
             $property = $classInfo->getProperty($name);
-            if ($classInfo->hasMethod($fun)) {
+            if (property_exists($this, $name)) {
+                if (is_null($property)) {
+                    $object->$name = $this->fromMethod($classInfo, $fun, $value);
+                } else {
+                    $object->$name = $this->fromDocBlock($value, $property->getDocBlockTypes());
+                }
+            } elseif ($classInfo->hasMethod($fun)) {
                 if (is_null($property)) {
                     $object->$fun(...$this->fromMethod($classInfo, $fun, $value));
                 } else {
