@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Lengbin\Common\Component;
 
 use Lengbin\Helper\Util\FormatHelper;
-use Lengbin\Helper\YiiSoft\Arrays\ArrayHelper;
+use MabeEnum\Enum;
 use phpDocumentor\Reflection\Types\Array_;
 use phpDocumentor\Reflection\Types\Object_;
 use Roave\BetterReflection\BetterReflection;
@@ -179,10 +179,52 @@ class BaseObject
 
     /**
      * object  public method toArray
+     *
+     * @param object|null $object
+     *
      * @return array
      */
-    public function toArray(): array
+    public function toArray(?object $object = null): array
     {
-        return ArrayHelper::toArray($this);
+        $data = [];
+        $object = is_null($object) ? $this : $object;
+        $classInfo = (new BetterReflection())->classReflector()->reflect(get_class($object));
+        $properties = $classInfo->getProperties();
+        foreach ($properties as $property) {
+            $name = $property->getName();
+            if (!$property->isPublic()) {
+                $getter = 'get' . ucfirst(FormatHelper::camelize($name));
+                if (!method_exists($object, $getter)) {
+                    continue;
+                }
+                $value = $object->$getter();
+            } else {
+                $value = $object->$name;
+            }
+            if (is_array($value)) {
+                $result = [];
+                foreach ($value as $key => $item) {
+                    if (method_exists($item, 'toArray')) {
+                        $result[$key] = $item->toArray();
+                    } elseif ($item instanceof Enum) {
+                        $result[$key] = $item->getValue();
+                    } else {
+                        $result[$key] = $this->toArray($item);
+                    }
+                }
+                $data[$name] = $result;
+            } elseif (is_object($value)) {
+                if (method_exists($value, 'toArray')) {
+                    $data[$name] = $value->toArray();
+                } elseif ($value instanceof Enum) {
+                    $data[$name] = $value->getValue();
+                } else {
+                    $data[$name] = $this->toArray($value);
+                }
+            } else {
+                $data[$name] = $value;
+            }
+        }
+        return $data;
     }
 }
