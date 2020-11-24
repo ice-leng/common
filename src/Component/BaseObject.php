@@ -208,8 +208,10 @@ class BaseObject
                         $result[$key] = $item->toArray();
                     } elseif ($item instanceof Enum) {
                         $result[$key] = $item->getValue();
-                    } else {
+                    } elseif (is_object($item)) {
                         $result[$key] = $this->toArray($item);
+                    }else {
+                        $result[$key] = $item;
                     }
                 }
                 $data[$name] = $result;
