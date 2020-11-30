@@ -10,6 +10,7 @@ use phpDocumentor\Reflection\Types\Array_;
 use phpDocumentor\Reflection\Types\Object_;
 use Roave\BetterReflection\BetterReflection;
 use Roave\BetterReflection\Reflection\ReflectionClass;
+use Throwable;
 
 class BaseObject
 {
@@ -191,40 +192,52 @@ class BaseObject
         $classInfo = (new BetterReflection())->classReflector()->reflect(get_class($object));
         $properties = $classInfo->getProperties();
         foreach ($properties as $property) {
-            $name = $property->getName();
-            if (!$property->isPublic()) {
-                $getter = 'get' . ucfirst(FormatHelper::camelize($name));
-                if (!method_exists($object, $getter)) {
+            try {
+                $name = $property->getName();
+                if (!$property->isPublic()) {
+                    // 如果 非公共属性， 没有 getter 方法 直接排除
+                    $getter = 'get' . ucfirst(FormatHelper::camelize($name));
+                    if (!method_exists($object, $getter)) {
+                        continue;
+                    }
+                    $value = $object->$getter();
+                } else {
+                    $value = $object->$name;
+                }
+
+                // 如果是 null 直接排除
+                if (is_null($value)) {
                     continue;
                 }
-                $value = $object->$getter();
-            } else {
-                $value = $object->$name;
-            }
-            if (is_array($value)) {
-                $result = [];
-                foreach ($value as $key => $item) {
-                    if (method_exists($item, 'toArray')) {
-                        $result[$key] = $item->toArray();
-                    } elseif ($item instanceof Enum) {
-                        $result[$key] = $item->getValue();
-                    } elseif (is_object($item)) {
-                        $result[$key] = $this->toArray($item);
-                    }else {
-                        $result[$key] = $item;
+
+                if (is_array($value)) {
+                    $result = [];
+                    foreach ($value as $key => $item) {
+                        if (method_exists($item, 'toArray')) {
+                            $result[$key] = $item->toArray();
+                        } elseif ($item instanceof Enum) {
+                            $result[$key] = $item->getValue();
+                        } elseif (is_object($item)) {
+                            $result[$key] = $this->toArray($item);
+                        } else {
+                            $result[$key] = $item;
+                        }
                     }
-                }
-                $data[$name] = $result;
-            } elseif (is_object($value)) {
-                if (method_exists($value, 'toArray')) {
-                    $data[$name] = $value->toArray();
-                } elseif ($value instanceof Enum) {
-                    $data[$name] = $value->getValue();
+                    $data[$name] = $result;
+                } elseif (is_object($value)) {
+                    if (method_exists($value, 'toArray')) {
+                        $data[$name] = $value->toArray();
+                    } elseif ($value instanceof Enum) {
+                        $data[$name] = $value->getValue();
+                    } else {
+                        $data[$name] = $this->toArray($value);
+                    }
                 } else {
-                    $data[$name] = $this->toArray($value);
+                    $data[$name] = $value;
                 }
-            } else {
-                $data[$name] = $value;
+            } catch (Throwable $exception) {
+                // 获取数据 异常， 直接排除
+                continue;
             }
         }
         return $data;
