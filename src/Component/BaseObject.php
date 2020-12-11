@@ -213,24 +213,30 @@ class BaseObject
                 if (is_array($value)) {
                     $result = [];
                     foreach ($value as $key => $item) {
-                        if (method_exists($item, 'toArray')) {
-                            $result[$key] = $item->toArray();
-                        } elseif ($item instanceof Enum) {
+                        if ($item instanceof Enum) {
                             $result[$key] = $item->getValue();
                         } elseif (is_object($item)) {
-                            $result[$key] = $this->toArray($item);
+                            if ($item instanceof BaseObject) {
+                                $result[$key] = $this->toArray($item);
+                            } elseif (method_exists($item, 'toArray')) {
+                                $result[$key] = $item->toArray();
+                            }
                         } else {
                             $result[$key] = $item;
                         }
                     }
                     $data[$name] = $result;
                 } elseif (is_object($value)) {
-                    if (method_exists($value, 'toArray')) {
-                        $data[$name] = $value->toArray();
-                    } elseif ($value instanceof Enum) {
+                    if ($value instanceof Enum) {
                         $data[$name] = $value->getValue();
+                    } elseif (is_object($value)) {
+                        if ($value instanceof BaseObject) {
+                            $data[$name] = $this->toArray($value);
+                        } elseif (method_exists($value, 'toArray')) {
+                            $data[$name] = $value->toArray();
+                        }
                     } else {
-                        $data[$name] = $this->toArray($value);
+                        $data[$name] = $value;
                     }
                 } else {
                     $data[$name] = $value;
