@@ -242,4 +242,12 @@ class BaseObject
         }
         return $data;
     }
+
+    public function toObjectString(?object $object = null)
+    {
+        $data = [];
+        $object = is_null($object) ? $this : $object;
+        $classInfo = (new BetterReflection())->classReflector()->reflect(get_class($object));
+        $properties = $classInfo->getProperties();
+    }
 }
