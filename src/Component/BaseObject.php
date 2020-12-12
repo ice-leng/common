@@ -179,17 +179,12 @@ class BaseObject
     }
 
     /**
-     * object  public method toArray
-     *
-     * @param object|null $object
-     *
      * @return array
      */
-    public function toArray(?object $object = null): array
+    public function toArray(): array
     {
         $data = [];
-        $object = is_null($object) ? $this : $object;
-        $classInfo = (new BetterReflection())->classReflector()->reflect(get_class($object));
+        $classInfo = (new BetterReflection())->classReflector()->reflect(get_class($this));
         $properties = $classInfo->getProperties();
         foreach ($properties as $property) {
             try {
@@ -197,12 +192,12 @@ class BaseObject
                 if (!$property->isPublic()) {
                     // 如果 非公共属性， 没有 getter 方法 直接排除
                     $getter = 'get' . ucfirst(FormatHelper::camelize($name));
-                    if (!method_exists($object, $getter)) {
+                    if (!method_exists($this, $getter)) {
                         continue;
                     }
-                    $value = $object->$getter();
+                    $value = $this->$getter();
                 } else {
-                    $value = $object->$name;
+                    $value = $this->$name;
                 }
 
                 // 如果是 null 直接排除
@@ -213,11 +208,9 @@ class BaseObject
                 if (is_array($value)) {
                     $result = [];
                     foreach ($value as $key => $item) {
-                        if ($item instanceof Enum) {
-                            $result[$key] = $item->getValue();
-                        } elseif (is_object($item)) {
-                            if ($item instanceof BaseObject) {
-                                $result[$key] = $this->toArray($item);
+                        if (is_object($item)) {
+                            if ($item instanceof Enum) {
+                                $result[$key] = $item->getValue();
                             } elseif (method_exists($item, 'toArray')) {
                                 $result[$key] = $item->toArray();
                             }
@@ -229,14 +222,8 @@ class BaseObject
                 } elseif (is_object($value)) {
                     if ($value instanceof Enum) {
                         $data[$name] = $value->getValue();
-                    } elseif (is_object($value)) {
-                        if ($value instanceof BaseObject) {
-                            $data[$name] = $this->toArray($value);
-                        } elseif (method_exists($value, 'toArray')) {
-                            $data[$name] = $value->toArray();
-                        }
-                    } else {
-                        $data[$name] = $value;
+                    } elseif (method_exists($value, 'toArray')) {
+                        $data[$name] = $value->toArray();
                     }
                 } else {
                     $data[$name] = $value;
@@ -249,11 +236,9 @@ class BaseObject
         return $data;
     }
 
-    public function toObjectString(?object $object = null)
+    public function __toObjectString()
     {
-        $data = [];
-        $object = is_null($object) ? $this : $object;
-        $classInfo = (new BetterReflection())->classReflector()->reflect(get_class($object));
+        $classInfo = (new BetterReflection())->classReflector()->reflect(get_class($this));
         $properties = $classInfo->getProperties();
     }
 }
