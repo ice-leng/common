@@ -236,9 +236,123 @@ class BaseObject
         return $data;
     }
 
-    public function __toObjectString()
+    public function __toObjectString(int $level = 0): string
     {
+        $spaces = str_repeat(' ', $level * 4);
         $classInfo = (new BetterReflection())->classReflector()->reflect(get_class($this));
+        $classname = lcfirst($classInfo->getShortName());
+        $string = $spaces . '$' . "{$classname} = new {$classInfo->getName()}();\n";
+
         $properties = $classInfo->getProperties();
+        foreach ($properties as $property) {
+            try {
+                $name = $property->getName();
+                if ($property->isPublic()) {
+                    $setter = '';
+                    $value = $this->$name;
+                } else {
+                    // 非公共属性
+                    $getter = 'get' . ucfirst(FormatHelper::camelize($name));
+                    $setter = 'set' . ucfirst(FormatHelper::camelize($name));
+                    $value = $this->$getter();
+                    //如果 没有 getter 方法 或者 没有 setter 方法 或者 空置 直接排除
+                    if (!method_exists($this, $getter) || empty($value) || !method_exists($this, $setter)) {
+                        continue;
+                    }
+                }
+
+                if (is_array($value)) {
+                    $subSpace = str_repeat(' ', ($level + 1) * 4);
+                    $str = '[';
+                    foreach ($value as $k => $v) {
+                        $str .= "\n" . $subSpace;
+                        if (is_string($k)) {
+                            $k = "'" . $k . "'";
+                            $str .= "{$k} => ";
+                        }
+                        if (is_object($v)) {
+                            if ($v instanceof Enum) {
+                                $v = '\\' . get_class($v) . '::' . $v->getName() . '()';
+                            } else {
+                                $info = (new BetterReflection())->classReflector()->reflect(get_class($v));
+                                $cname = lcfirst($info->getShortName());
+                                $cSpace = str_repeat(' ', ($level + 2) * 4);
+                                $v = "(function () {\n" . $v->__toObjectString($level + 2) . "{$cSpace}return $" . $cname . ";" . "\n{$subSpace}})()";
+                            }
+                        } else {
+                            switch (gettype($v)) {
+                                case 'boolean':
+                                    $v = $v ? 'true' : 'false';
+                                    break;
+                                case 'integer':
+                                    $v = (string)$v;
+                                    break;
+                                case 'double':
+                                    $v = (string)$v;
+                                    break;
+                                case 'string':
+                                    $v = "'" . $v . "'";
+                                    break;
+                                case 'resource':
+                                    $v = '{resource}';
+                                    break;
+                                case 'NULL':
+                                    $v = 'null';
+                                    break;
+                                case 'unknown type':
+                                    $v = '{unknown}';
+                                    break;
+                            }
+                        }
+                        $str .= $v . ',';
+                    }
+                    $value = $str . "\n" . $spaces . ']';
+                } elseif (is_object($value)) {
+                    if ($value instanceof Enum) {
+                        $value = '\\' . get_class($value) . '::' . $value->getName() . '()';
+                    } else {
+                        $info = (new BetterReflection())->classReflector()->reflect(get_class($value));
+                        $cname = lcfirst($info->getShortName());
+                        $cSpace = str_repeat(' ', ($level + 1) * 4);
+                        $value = "(function () {\n" . $value->__toObjectString($level + 1) . "{$cSpace}return $" . $cname . ";" . "\n{$spaces}})()";
+                    }
+                } else {
+                    switch (gettype($value)) {
+                        case 'boolean':
+                            $value = $value ? 'true' : 'false';
+                            break;
+                        case 'integer':
+                            $value = (string)$value;
+                            break;
+                        case 'double':
+                            $value = (string)$value;
+                            break;
+                        case 'string':
+                            $value = "'" . $value . "'";
+                            break;
+                        case 'resource':
+                            $value = '{resource}';
+                            break;
+                        case 'NULL':
+                            $value = 'null';
+                            break;
+                        case 'unknown type':
+                            $value = '{unknown}';
+                            break;
+                    }
+                }
+                if ($property->isPublic()) {
+                    $string .= ($spaces . '$' . "{$classname}->{$name} = {$value};\n");
+                } else {
+                    $string .= ($spaces . '$' . "{$classname}->{$setter}({$value});\n");
+                }
+
+            } catch (Throwable $exception) {
+                // 获取数据 异常， 直接排除
+                continue;
+            }
+        }
+        return $string;
     }
+
 }
