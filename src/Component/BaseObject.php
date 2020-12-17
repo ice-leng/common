@@ -247,7 +247,7 @@ class BaseObject
     public function __getClassname(): string
     {
         $classInfo = (new BetterReflection())->classReflector()->reflect(get_class($this));
-        return lcfirst($classInfo->getShortName());
+        return $classInfo->getShortName();
     }
 
     /**
