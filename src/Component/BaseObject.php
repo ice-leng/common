@@ -236,6 +236,25 @@ class BaseObject
         return $data;
     }
 
+    /**
+     * @return false|string
+     */
+    public function __toString()
+    {
+        return json_encode($this->toArray(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    }
+
+    public function getClassName(): string
+    {
+        $classInfo = (new BetterReflection())->classReflector()->reflect(get_class($this));
+        return lcfirst($classInfo->getShortName());
+    }
+
+    /**
+     * @param int $level
+     *
+     * @return string
+     */
     public function __toObjectString(int $level = 0): string
     {
         $spaces = str_repeat(' ', $level * 4);
