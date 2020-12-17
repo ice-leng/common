@@ -244,7 +244,7 @@ class BaseObject
         return json_encode($this->toArray(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 
-    public function getClassName(): string
+    public function __getClassname(): string
     {
         $classInfo = (new BetterReflection())->classReflector()->reflect(get_class($this));
         return lcfirst($classInfo->getShortName());
