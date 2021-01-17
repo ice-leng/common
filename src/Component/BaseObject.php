@@ -51,6 +51,11 @@ class BaseObject
         }
 
         $class = new $className;
+
+        if (is_object($value) && $class instanceof $value) {
+            return $value;
+        }
+
         if ($class instanceof BaseObject) {
             $class->configure($class, $value);
         }
@@ -304,8 +309,6 @@ class BaseObject
                                     $v = $v ? 'true' : 'false';
                                     break;
                                 case 'integer':
-                                    $v = (string)$v;
-                                    break;
                                 case 'double':
                                     $v = (string)$v;
                                     break;
@@ -320,6 +323,9 @@ class BaseObject
                                     break;
                                 case 'unknown type':
                                     $v = '{unknown}';
+                                    break;
+                                case 'array':
+                                    $value = json_encode($value);
                                     break;
                             }
                         }
@@ -341,8 +347,6 @@ class BaseObject
                             $value = $value ? 'true' : 'false';
                             break;
                         case 'integer':
-                            $value = (string)$value;
-                            break;
                         case 'double':
                             $value = (string)$value;
                             break;
@@ -357,6 +361,9 @@ class BaseObject
                             break;
                         case 'unknown type':
                             $value = '{unknown}';
+                            break;
+                        case 'array':
+                            $value = json_encode($value);
                             break;
                     }
                 }
