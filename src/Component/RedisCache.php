@@ -37,7 +37,7 @@ abstract class RedisCache
     {
         if (is_null($ttl)) {
             $config = $this->getConfig();
-            $ttl = ArrayHelper::get($config, 'ttl', '3600');
+            $ttl = ArrayHelper::get($config, 'ttl', 3600 * 2);
             [$min, $max] = ArrayHelper::get($config, 'random', [1, 60]);
             return $ttl + rand($min, $max);
         }
