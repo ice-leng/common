@@ -249,10 +249,49 @@ class BaseObject
         return json_encode($this->toArray(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
 
-    public function __getClassname(): string
+    /**
+     * @param bool $isSource
+     *
+     * @return string
+     */
+    public function __getClassname($isSource = true): string
     {
         $classInfo = (new BetterReflection())->classReflector()->reflect(get_class($this));
-        return $classInfo->getShortName();
+        return $isSource ? $classInfo->getShortName() : lcfirst($classInfo->getShortName());
+    }
+
+    /**
+     * @param $value
+     *
+     * @return string
+     */
+    public function __getType($value): string
+    {
+        switch (gettype($value)) {
+            case 'boolean':
+                $value = $value ? 'true' : 'false';
+                break;
+            case 'integer':
+            case 'double':
+                $value = (string)$value;
+                break;
+            case 'string':
+                $value = "'" . $value . "'";
+                break;
+            case 'resource':
+                $value = '{resource}';
+                break;
+            case 'NULL':
+                $value = 'null';
+                break;
+            case 'unknown type':
+                $value = '{unknown}';
+                break;
+            case 'array':
+                $value = json_encode($value);
+                break;
+        }
+        return $value;
     }
 
     /**
@@ -304,30 +343,7 @@ class BaseObject
                                 $v = "(function () {\n" . $v->__toObjectString($level + 2) . "{$cSpace}return $" . $cname . ";" . "\n{$subSpace}})()";
                             }
                         } else {
-                            switch (gettype($v)) {
-                                case 'boolean':
-                                    $v = $v ? 'true' : 'false';
-                                    break;
-                                case 'integer':
-                                case 'double':
-                                    $v = (string)$v;
-                                    break;
-                                case 'string':
-                                    $v = "'" . $v . "'";
-                                    break;
-                                case 'resource':
-                                    $v = '{resource}';
-                                    break;
-                                case 'NULL':
-                                    $v = 'null';
-                                    break;
-                                case 'unknown type':
-                                    $v = '{unknown}';
-                                    break;
-                                case 'array':
-                                    $value = json_encode($value);
-                                    break;
-                            }
+                            $v = $this->__getType($v);
                         }
                         $str .= $v . ',';
                     }
@@ -342,30 +358,7 @@ class BaseObject
                         $value = "(function () {\n" . $value->__toObjectString($level + 1) . "{$cSpace}return $" . $cname . ";" . "\n{$spaces}})()";
                     }
                 } else {
-                    switch (gettype($value)) {
-                        case 'boolean':
-                            $value = $value ? 'true' : 'false';
-                            break;
-                        case 'integer':
-                        case 'double':
-                            $value = (string)$value;
-                            break;
-                        case 'string':
-                            $value = "'" . $value . "'";
-                            break;
-                        case 'resource':
-                            $value = '{resource}';
-                            break;
-                        case 'NULL':
-                            $value = 'null';
-                            break;
-                        case 'unknown type':
-                            $value = '{unknown}';
-                            break;
-                        case 'array':
-                            $value = json_encode($value);
-                            break;
-                    }
+                    $value = $this->__getType($value);
                 }
                 if ($property->isPublic()) {
                     $string .= ($spaces . '$' . "{$classname}->{$name} = {$value};\n");
