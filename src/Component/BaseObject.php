@@ -265,7 +265,7 @@ class BaseObject
      *
      * @return string
      */
-    public function __getType($value): string
+    public function __getValue($value): string
     {
         switch (gettype($value)) {
             case 'boolean':
@@ -369,7 +369,7 @@ class BaseObject
                                 $v = "(function () {\n" . $v->__toObjectString($level + 2) . "{$cSpace}return $" . $cname . ";" . "\n{$subSpace}})()";
                             }
                         } else {
-                            $v = $this->__getType($v);
+                            $v = $this->__getValue($v);
                         }
                         $str .= $v . ',';
                     }
@@ -384,7 +384,7 @@ class BaseObject
                         $value = "(function () {\n" . $value->__toObjectString($level + 1) . "{$cSpace}return $" . $cname . ";" . "\n{$spaces}})()";
                     }
                 } else {
-                    $value = $this->__getType($value);
+                    $value = $this->__getValue($value);
                 }
                 if ($property->isPublic()) {
                     $string .= ($spaces . '$' . "{$classname}->{$name} = {$value};\n");
