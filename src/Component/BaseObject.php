@@ -244,7 +244,7 @@ class BaseObject
     /**
      * @return false|string
      */
-    public function __toString()
+    public function __toJsonString()
     {
         return json_encode($this->toArray(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     }
