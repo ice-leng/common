@@ -9,7 +9,7 @@ use Lengbin\Helper\YiiSoft\StringHelper;
  * Class RedisCacheHelper
  * @package Lengbin\Helper\Util
  */
-abstract class RedisCache
+abstract class AbstractRedisCache
 {
     use Singleton;
 
