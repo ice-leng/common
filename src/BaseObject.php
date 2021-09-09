@@ -66,7 +66,7 @@ class BaseObject
         return $value;
     }
 
-    private function getDocBlock(ReflectionObject $class, ?string $tagName, string $docComment, $value)
+    private function getDocBlock(ReflectionObject $class, string $tagName, $docComment, $value)
     {
         if (empty($docComment)) {
             return $value;
