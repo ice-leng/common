@@ -1,6 +1,6 @@
 <?php
 
-namespace Lengbin\Common\Component;
+namespace Lengbin\Common;
 
 use Lengbin\Helper\YiiSoft\Arrays\ArrayHelper;
 use Lengbin\Helper\YiiSoft\StringHelper;

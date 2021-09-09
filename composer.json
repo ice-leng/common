@@ -5,8 +5,9 @@
   "keywords": ["php", "extension", "common"],
   "license": "MIT",
   "require": {
-    "php": ">=7.2.0",
-    "lengbin/helper": "^1.0"
+    "php": ">=7.2",
+    "lengbin/helper": "^1.0",
+    "phpdocumentor/reflection-docblock": "^5.2"
   },
   "minimum-stability": "stable",
   "autoload": {

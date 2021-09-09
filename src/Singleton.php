@@ -1,6 +1,6 @@
 <?php
 
-namespace Lengbin\Common\Component;
+namespace Lengbin\Common;
 
 trait Singleton
 {
