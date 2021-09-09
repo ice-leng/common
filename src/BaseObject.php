@@ -66,13 +66,13 @@ class BaseObject
         return $value;
     }
 
-    private function getDocBlock(ReflectionObject $class, string $tagName, $docComment, $value)
+    private function getDocBlock($class, Context $context, $value, string $tagName)
     {
+        $docComment = $class->getDocComment();
         if (empty($docComment)) {
             return $value;
         }
         $factory = DocBlockFactory::createInstance();
-        $context = new Context($class->getNamespaceName(), Reflection::getUseStatements($class));
         $block = $factory->create($docComment, $context);
         $tags = $block->getTagsByName($tagName);
         if (empty($tags)) {
@@ -85,21 +85,19 @@ class BaseObject
     public function configure($object, array $properties)
     {
         $class = new ReflectionObject($object);
+        $context = new Context($class->getNamespaceName(), Reflection::getUseStatements($class));
         foreach ($properties as $name => $value) {
             $camelize = FormatHelper::camelize($name);
             $setter = 'set' . ucfirst($camelize);
             switch (true) {
                 case $class->hasProperty($name):
-                    $docComment = $class->getProperty($name)->getDocComment();
-                    $object->{$name} = $this->getDocBlock($class, 'tag', $docComment, $value);
+                    $object->{$name} = $this->getDocBlock($class->getProperty($name), $context, $value, 'tag');
                     break;
                 case $class->hasProperty($camelize):
-                    $docComment = $class->getProperty($camelize)->getDocComment();
-                    $object->{$camelize} = $this->getDocBlock($class, 'tag', $docComment, $value);
+                    $object->{$camelize} = $this->getDocBlock($class->getProperty($camelize), $context, $value, 'tag');
                     break;
                 case $class->hasMethod($setter):
-                    $docComment = $class->getMethod($setter)->getDocComment();
-                    $value = $this->getDocBlock($class, 'param', $docComment, $value);
+                    $value = $this->getDocBlock($class->getMethod($setter), $context, $value, 'param');
                     $object->{$setter}($value);
                     break;
                 default:
