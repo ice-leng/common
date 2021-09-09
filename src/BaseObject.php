@@ -66,7 +66,7 @@ class BaseObject
         return $value;
     }
 
-    private function getDocBlock($class, Context $context, $value, string $tagName)
+    private function getDocBlock($class, $context, $value, $tagName)
     {
         $docComment = $class->getDocComment();
         if (empty($docComment)) {
@@ -91,10 +91,10 @@ class BaseObject
             $setter = 'set' . ucfirst($camelize);
             switch (true) {
                 case $class->hasProperty($name):
-                    $object->{$name} = $this->getDocBlock($class->getProperty($name), $context, $value, 'tag');
+                    $object->{$name} = $this->getDocBlock($class->getProperty($name), $context, $value, 'var');
                     break;
                 case $class->hasProperty($camelize):
-                    $object->{$camelize} = $this->getDocBlock($class->getProperty($camelize), $context, $value, 'tag');
+                    $object->{$camelize} = $this->getDocBlock($class->getProperty($camelize), $context, $value, 'var');
                     break;
                 case $class->hasMethod($setter):
                     $value = $this->getDocBlock($class->getMethod($setter), $context, $value, 'param');
