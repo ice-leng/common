@@ -98,7 +98,7 @@ class BaseObject
                     $object->{$camelize} = $this->getDocBlock($class, 'tag', $docComment, $value);
                     break;
                 case $class->hasMethod($setter):
-                    $docComment = $class->getMethod($name)->getDocComment();
+                    $docComment = $class->getMethod($setter)->getDocComment();
                     $value = $this->getDocBlock($class, 'param', $docComment, $value);
                     $object->{$setter}($value);
                     break;
