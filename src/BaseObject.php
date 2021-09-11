@@ -90,15 +90,15 @@ class BaseObject
             $camelize = FormatHelper::camelize($name);
             $setter = 'set' . ucfirst($camelize);
             switch (true) {
+                case $class->hasMethod($setter):
+                    $value = $this->getDocBlock($class->getMethod($setter), $context, $value, 'param');
+                    $object->{$setter}($value);
+                    break;
                 case $class->hasProperty($name):
                     $object->{$name} = $this->getDocBlock($class->getProperty($name), $context, $value, 'var');
                     break;
                 case $class->hasProperty($camelize):
                     $object->{$camelize} = $this->getDocBlock($class->getProperty($camelize), $context, $value, 'var');
-                    break;
-                case $class->hasMethod($setter):
-                    $value = $this->getDocBlock($class->getMethod($setter), $context, $value, 'param');
-                    $object->{$setter}($value);
                     break;
                 default:
                     $object->{$name} = $value;
