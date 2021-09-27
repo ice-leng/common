@@ -56,8 +56,8 @@ abstract class AbstractRedisCache
      */
     protected function getCacheKey(string $key, ?string $prefix = null): string
     {
-        $mc = ArrayHelper::get($this->getConfig(), 'mc', 'app');
-        if (!is_null($prefix)) {
+        $mc = ArrayHelper::get($this->getConfig(), 'mc', 'redis');
+        if ($prefix) {
             $key = $prefix . ':' . $key;
         }
         return sprintf('mc:%s:%s', $mc, $key);
@@ -125,7 +125,7 @@ abstract class AbstractRedisCache
         $missed = [];
         foreach ($data as $index => $item) {
             // 获得 未缓存 key
-            if (StringHelper::isEmpty($item) || is_null($item)) {
+            if (!$item) {
                 $key = $keys[$index];
                 $missed[$index] = $key;
                 continue;
