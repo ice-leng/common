@@ -30,4 +30,15 @@ class Page extends BaseObject
      * @var bool
      */
     public $total = true;
+
+    /**
+     * @return Page
+     */
+    public static function all(): Page
+    {
+        return new Page([
+            'all'   => true,
+            'total' => false,
+        ]);
+    }
 }
