@@ -9,6 +9,8 @@ use MabeEnum\Enum;
 use phpDocumentor\Reflection\DocBlock\Tags\TagWithType;
 use phpDocumentor\Reflection\DocBlockFactory;
 use phpDocumentor\Reflection\Types\Array_;
+use phpDocumentor\Reflection\Types\Compound;
+use phpDocumentor\Reflection\Types\Nullable;
 use phpDocumentor\Reflection\Types\Object_;
 use phpDocumentor\Reflection\Types\Context;
 use ReflectionClass;
@@ -54,6 +56,17 @@ class BaseObject
     {
         $type = $tagWithType->getType();
         switch (true) {
+            case $type instanceof Compound:
+                foreach ($type->getIterator() as $item) {
+                    if ($item instanceof Object_) {
+                        $value = $this->createObject($item->getFqsen()->__toString(), $value);
+                        break;
+                    }
+                }
+                break;
+            case $type instanceof Nullable:
+                $value = $this->createObject($type->getActualType()->getFqsen()->__toString(), $value);
+                break;
             case $type instanceof Object_:
                 $value = $this->createObject($type->getFqsen()->__toString(), $value);
                 break;
@@ -177,6 +190,9 @@ class BaseObject
         $data = [];
         $properties = $class->getProperties();
         foreach ($properties as $property) {
+            if ($property->isPrivate()) {
+                continue;
+            }
             $name = $property->getName();
             $value = $object->{$name};
             if (is_null($value)) {
