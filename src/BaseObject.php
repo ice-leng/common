@@ -64,7 +64,7 @@ class BaseObject
                     }
                 }
                 break;
-            case $type instanceof Nullable:
+            case $type instanceof Nullable && method_exists($type->getActualType(), 'getFqsen'):
                 $value = $this->createObject($type->getActualType()->getFqsen()->__toString(), $value);
                 break;
             case $type instanceof Object_:
