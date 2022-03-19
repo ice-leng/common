@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Lengbin\Common;
 
+use Lengbin\Common\Annotation\ArrayType;
+use Lengbin\Common\Annotation\EnumView;
 use Lengbin\Helper\Util\FormatHelper;
 use MabeEnum\Enum;
 use phpDocumentor\Reflection\DocBlock\Tags\TagWithType;
@@ -15,6 +17,7 @@ use phpDocumentor\Reflection\Types\Object_;
 use phpDocumentor\Reflection\Types\Context;
 use ReflectionClass;
 use ReflectionObject;
+use ReflectionProperty;
 use RuntimeException;
 
 class BaseObject
@@ -38,11 +41,11 @@ class BaseObject
             return $value;
         }
 
-        $class = new ReflectionClass($classname);
-        if (method_exists($classname, 'byValue')) {
+        if (class_exists(Enum::class) && is_subclass_of($classname, Enum::class)) {
             return $classname::byValue($value);
         }
 
+        $class = new ReflectionClass($classname);
         $object = $class->newInstance();
 
         if ($object instanceof BaseObject) {
@@ -79,13 +82,45 @@ class BaseObject
         return $value;
     }
 
-    private function getDocBlock($class, $context, $value, $tagName)
+    private function getDocBlockByProperty($class, $value, $isPhp8): array
     {
+        $isHandle = false;
+        if ($class instanceof ReflectionProperty) {
+            $type = $class->getType();
+            if (!$type) {
+                return [$value, $isHandle];
+            }
+            if (!$type->isBuiltin()) {
+                $isHandle = true;
+                $value = $this->createObject($type->getName(), $value);
+            }
+            if ($type->getName() === 'array' && $isPhp8) {
+                $arrayTypes = $class->getAttributes(ArrayType::class);
+                if (!empty($arrayTypes)) {
+                    $isHandle = true;
+                    $arrayType = $arrayTypes[0]->newInstance();
+                    if ($arrayType->className) {
+                        foreach ($value as $key => $item) {
+                            $value[$key] = $this->createObject($arrayType->className, $item);
+                        }
+                    }
+                }
+            }
+        }
+        return [$value, $isHandle];
+    }
+
+    private function getDocBlock($class, $factory, $context, $value, $tagName, $isPhp8)
+    {
+        [$value, $isHandle] = $this->getDocBlockByProperty($class, $value, $isPhp8);
+        if ($isHandle) {
+            return $value;
+        }
+
         $docComment = $class->getDocComment();
         if (empty($docComment)) {
             return $value;
         }
-        $factory = DocBlockFactory::createInstance();
         $block = $factory->create($docComment, $context);
         $tags = $block->getTagsByName($tagName);
         if (empty($tags)) {
@@ -98,20 +133,22 @@ class BaseObject
     public function configure($object, array $properties)
     {
         $class = new ReflectionObject($object);
+        $factory = DocBlockFactory::createInstance();
         $context = new Context($class->getNamespaceName(), Reflection::getUseStatements($class));
+        $isPhp8 = version_compare(PHP_VERSION, '8.0.0', '>');
         foreach ($properties as $name => $value) {
             $camelize = FormatHelper::camelize($name);
             $setter = 'set' . ucfirst($camelize);
             switch (true) {
                 case $class->hasMethod($setter):
-                    $value = $this->getDocBlock($class->getMethod($setter), $context, $value, 'param');
+                    $value = $this->getDocBlock($class->getMethod($setter), $factory, $context, $value, 'param', $isPhp8);
                     $object->{$setter}($value);
                     break;
                 case $class->hasProperty($name):
-                    $object->{$name} = $this->getDocBlock($class->getProperty($name), $context, $value, 'var');
+                    $object->{$name} = $this->getDocBlock($class->getProperty($name), $factory, $context, $value, 'var', $isPhp8);
                     break;
                 case $class->hasProperty($camelize):
-                    $object->{$camelize} = $this->getDocBlock($class->getProperty($camelize), $context, $value, 'var');
+                    $object->{$camelize} = $this->getDocBlock($class->getProperty($camelize), $factory, $context, $value, 'var', $isPhp8);
                     break;
                 default:
                     $object->{$name} = $value;
@@ -166,17 +203,37 @@ class BaseObject
         $this->{$name} = $value;
     }
 
-    private function fromValue($value)
+    private function fromValue($property, $value, $isPhp8)
     {
         switch (true) {
             case is_array($value):
                 foreach ($value as $key => $item) {
-                    $value[$key] = $this->fromValue($item);
+                    $value[$key] = $this->fromValue($property, $item, $isPhp8);
                 }
                 break;
             case is_object($value):
                 if (class_exists(Enum::class) && $value instanceof Enum) {
-                    $value = $value->getValue();
+                    $flags = EnumView::ENUM_VALUE;
+                    if ($isPhp8 && $enumViews = $property->getAttributes(EnumView::class)) {
+                        $flags = $enumViews[0]->newInstance()->flags;
+                    }
+                    switch ($flags) {
+                        case EnumView::ENUM_NAME;
+                            $value = $value->getName();
+                            break;
+                        case EnumView::ENUM_VALUE;
+                            $value = $value->getValue();
+                            break;
+                        case EnumView::ENUM_MESSAGE;
+                            $value = $value->getMessage();
+                            break;
+                        case EnumView::ENUM_ALL;
+                            $value = [
+                                'value'   => $value->getValue(),
+                                'message' => $value->getMessage(),
+                            ];
+                            break;
+                    }
                 } elseif (method_exists($value, 'toArray')) {
                     $value = $value->toArray();
                 }
@@ -185,10 +242,11 @@ class BaseObject
         return $value;
     }
 
-    private function getObjectData(ReflectionClass $class, $object)
+    private function getObjectData(ReflectionClass $class, $object, $isPhp8)
     {
         $data = [];
         $properties = $class->getProperties();
+
         foreach ($properties as $property) {
             if ($property->isPrivate()) {
                 continue;
@@ -198,7 +256,7 @@ class BaseObject
             if (is_null($value)) {
                 continue;
             }
-            $data[$name] = $this->fromValue($value);
+            $data[$name] = $this->fromValue($property, $value, $isPhp8);
         }
         return $data;
     }
@@ -206,13 +264,14 @@ class BaseObject
     public function toArray(): array
     {
         $class = new ReflectionObject($this);
-        $data = $this->getObjectData($class, $this);
+        $isPhp8 = version_compare(PHP_VERSION, '8.0.0', '>');
+        $data = $this->getObjectData($class, $this, $isPhp8);
         while ($class->getParentClass()) {
             $class = new ReflectionClass($class->getParentClass()->getName());
             if (!$class->isInstantiable()) {
                 continue;
             }
-            $parent = $this->getObjectData($class, $this);
+            $parent = $this->getObjectData($class, $this, $isPhp8);
             $data = array_merge($data, $parent);
         }
         return $data;
