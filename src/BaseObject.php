@@ -46,13 +46,7 @@ class BaseObject
         }
 
         $class = new ReflectionClass($classname);
-        $object = $class->newInstance();
-
-        if ($object instanceof BaseObject) {
-            $object->configure($object, $value);
-        }
-
-        return $object;
+        return $class->newInstance($value);
     }
 
     private function fromDocBlock(TagWithType $tagWithType, $value)
