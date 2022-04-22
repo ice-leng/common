@@ -11,25 +11,25 @@ class Page extends BaseObject
      * 页码
      * @var int
      */
-    public $page = 1;
+    public int $page = 1;
 
     /**
      * 页数
      * @var int
      */
-    public $pageSize = 20;
+    public int $pageSize = 20;
 
     /**
      * 是否获取全部结果
      * @var bool
      */
-    public $all = false;
+    public bool $all = false;
 
     /**
      * 是否获取总数
      * @var bool
      */
-    public $total = true;
+    public bool $total = true;
 
     /**
      * @return Page
