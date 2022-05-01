@@ -21,15 +21,15 @@ class Page extends BaseObject
 
     /**
      * 是否获取全部结果
-     * @var bool
+     * @var int
      */
-    public bool $all = false;
+    public int $all = 0;
 
     /**
      * 是否获取总数
-     * @var bool
+     * @var int
      */
-    public bool $total = true;
+    public int $total = 1;
 
     /**
      * @return Page
@@ -37,8 +37,8 @@ class Page extends BaseObject
     public static function all(): Page
     {
         return new Page([
-            'all'   => true,
-            'total' => false,
+            'all' => 1,
+            'total' => 0,
         ]);
     }
 }
