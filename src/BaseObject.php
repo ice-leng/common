@@ -245,6 +245,12 @@ class BaseObject
             if ($property->isPrivate()) {
                 continue;
             }
+            if ($property->isProtected()) {
+                $property->setAccessible(true);
+            }
+            if (!$property->isInitialized($object)) {
+                continue;
+            }
             $name = $property->getName();
             $value = $object->{$name};
             if (is_null($value)) {
