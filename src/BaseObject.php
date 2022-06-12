@@ -22,6 +22,16 @@ use RuntimeException;
 
 class BaseObject
 {
+
+    // 严格模式 赋值
+    private bool $_strict = false;
+
+    // 字段 下划线
+    private bool $_underlineName = false;
+
+    // 字段 驼峰
+    private bool $_humpName = false;
+
     public function __construct(array $config = [])
     {
         if (!empty($config)) {
@@ -124,6 +134,24 @@ class BaseObject
         return $this->fromDocBlock($tag, $value);
     }
 
+    /**
+     * @return bool
+     */
+    public function getStrict(): bool
+    {
+        return $this->_strict;
+    }
+
+    /**
+     * @param bool $strict
+     * @return BaseObject
+     */
+    public function setStrict(bool $strict = true): BaseObject
+    {
+        $this->_strict = $strict;
+        return $this;
+    }
+
     public function configure($object, array $properties)
     {
         $class = new ReflectionObject($object);
@@ -145,7 +173,9 @@ class BaseObject
                     $object->{$camelize} = $this->getDocBlock($class->getProperty($camelize), $factory, $context, $value, 'var', $isPhp8);
                     break;
                 default:
-                    $object->{$name} = $value;
+                    if (!$this->getStrict()) {
+                        $object->{$name} = $value;
+                    }
                     break;
             }
         }
@@ -223,7 +253,7 @@ class BaseObject
                             break;
                         case EnumView::ENUM_ALL;
                             $value = [
-                                'value'   => $value->getValue(),
+                                'value' => $value->getValue(),
                                 'message' => $value->getMessage(),
                             ];
                             break;
@@ -234,6 +264,42 @@ class BaseObject
                 break;
         }
         return $value;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getUnderlineName(): bool
+    {
+        return $this->_underlineName;
+    }
+
+    /**
+     * @param bool $underlineName
+     * @return BaseObject
+     */
+    public function setUnderlineName(bool $underlineName = true): BaseObject
+    {
+        $this->_underlineName = $underlineName;
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getHumpName(): bool
+    {
+        return $this->_humpName;
+    }
+
+    /**
+     * @param bool $humpName
+     * @return BaseObject
+     */
+    public function setHumpName(bool $humpName = true): BaseObject
+    {
+        $this->_humpName = $humpName;
+        return $this;
     }
 
     private function getObjectData(ReflectionClass $class, $object, $isPhp8)
@@ -255,6 +321,14 @@ class BaseObject
             $value = $object->{$name};
             if (is_null($value)) {
                 continue;
+            }
+            switch (true) {
+                case $this->getUnderlineName():
+                    $name = FormatHelper::uncamelize($name);
+                    break;
+                case $this->getHumpName():
+                    $name = FormatHelper::camelize($name);
+                    break;
             }
             $data[$name] = $this->fromValue($property, $value, $isPhp8);
         }
