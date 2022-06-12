@@ -56,7 +56,17 @@ class BaseObject
         }
 
         $class = new ReflectionClass($classname);
-        return $class->newInstance($value);
+
+        if (!is_subclass_of($classname, BaseObject::class)) {
+            return $class->newInstance($value);
+        }
+
+        $model = $class->newInstance();
+        $model->setStrict($this->getStrict());
+        $model->setUnderlineName($this->getUnderlineName());
+        $model->setHumpName($this->getHumpName());
+        $model->configure($model, $value);
+        return $model;
     }
 
     private function fromDocBlock(TagWithType $tagWithType, $value)
