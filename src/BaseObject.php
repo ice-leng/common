@@ -65,7 +65,9 @@ class BaseObject
         $model->setStrict($this->getStrict());
         $model->setUnderlineName($this->getUnderlineName());
         $model->setHumpName($this->getHumpName());
-        $model->configure($model, $value);
+        if (!empty($value)) {
+            $model->configure($model, $value);
+        }
         return $model;
     }
 
