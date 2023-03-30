@@ -334,13 +334,15 @@ class BaseObject
             if (is_null($value)) {
                 continue;
             }
-            switch (true) {
-                case $this->getUnderlineName():
-                    $name = FormatHelper::uncamelize($name);
-                    break;
-                case $this->getHumpName():
-                    $name = FormatHelper::camelize($name);
-                    break;
+            if (!StringHelper::startsWith($name, "_")) {
+                switch (true) {
+                    case $this->getUnderlineName():
+                        $name = FormatHelper::uncamelize($name);
+                        break;
+                    case $this->getHumpName():
+                        $name = FormatHelper::camelize($name);
+                        break;
+                }
             }
             $data[$name] = $this->fromValue($property, $value, $isPhp8);
         }
