@@ -46,6 +46,11 @@ class BaseObject
 
     }
 
+    public function __setObject(string $classname, $value): object
+    {
+        return (object)$value;
+    }
+
     private function createObject(string $classname, $value): object
     {
         if (is_object($value)) {
@@ -57,6 +62,9 @@ class BaseObject
         }
 
         $class = new ReflectionClass($classname);
+        if ($class->isInterface()) {
+            return $this->__setObject($classname, $value);
+        }
 
         if (!is_subclass_of($classname, BaseObject::class)) {
             return $class->newInstance($value);
@@ -230,11 +238,13 @@ class BaseObject
         $setter = 'set' . $name;
         if (method_exists($this, $setter)) {
             $this->$setter($value);
+            return;
         }
 
         $camelize = FormatHelper::camelize($name);
         if (property_exists($this, $camelize)) {
             $this->{$camelize} = $value;
+            return;
         }
 
         $this->{$name} = $value;
