@@ -70,10 +70,11 @@ class BaseObject
             return $class->newInstance($value);
         }
 
-        $model = $class->newInstance();
-        $model->setStrict($this->getStrict());
-        $model->setUnderlineName($this->getUnderlineName());
-        $model->setHumpName($this->getHumpName());
+        $model = $class
+            ->newInstance()
+            ->setStrict($this->getStrict())
+            ->setUnderlineName($this->getUnderlineName())
+            ->setHumpName($this->getHumpName());
         if (!empty($value)) {
             $model->configure($model, $value);
         }
@@ -282,7 +283,11 @@ class BaseObject
                             break;
                     }
                 } elseif (method_exists($value, 'toArray')) {
-                    $value = $value->toArray();
+                    $value = $value
+                        ->setStrict($this->getStrict())
+                        ->setUnderlineName($this->getUnderlineName())
+                        ->setHumpName($this->getHumpName())
+                        ->toArray();
                 }
                 break;
         }
