@@ -283,11 +283,13 @@ class BaseObject
                             break;
                     }
                 } elseif (method_exists($value, 'toArray')) {
-                    $value = $value
-                        ->setStrict($this->getStrict())
-                        ->setUnderlineName($this->getUnderlineName())
-                        ->setHumpName($this->getHumpName())
-                        ->toArray();
+                    if ($value instanceof BaseObject) {
+                        $value = $value
+                            ->setStrict($this->getStrict())
+                            ->setUnderlineName($this->getUnderlineName())
+                            ->setHumpName($this->getHumpName());
+                    }
+                    $value = $value->toArray();
                 }
                 break;
         }
